@@ -95,7 +95,7 @@ jobs:
         if: steps.cache-apt.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install --download-only -y --no-install-recommends \
+          sudo apt-fast install --download-only -y --no-install-recommends \
             asciidoctor \
             cmake \
             dbus-x11 \
