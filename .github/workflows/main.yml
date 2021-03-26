@@ -65,10 +65,10 @@ jobs:
 
     env:
       LUA: ${{ matrix.lua_version }}
-      LUAINCLUDE: /usr/include/lua${{ matrix.lua_version }}
-      LUALIBRARY: /usr/lib/x86_64-linux-gnu/liblua${{ matrix.lua_version }}.so
-      TESTS_SCREEN_SIZE: ${{ matrix.tests_screen_size || '' }}
-      SOURCE_DATE_EPOCH: ${{ matrix.source_date_epoch || '' }}
+      LUAINCLUDE: ${{ matrix.lua_include || format('/usr/include/lua{0}', matrix.lua_version) }}
+      LUALIBRARY: ${{ matrix.lua_library || format('/usr/lib/x86_64-linux-gnu/liblua{0}.so', matrix.lua_version) }}
+      TESTS_SCREEN_SIZE: ${{ matrix.tests_screen_size }}
+      SOURCE_DATE_EPOCH: ${{ matrix.source_date_epoch }}
       TEST_TIMEOUT: '100'
       CI: 'true'
 
@@ -253,8 +253,8 @@ jobs:
         run: |
           cmake -S ${{ github.workspace }} -B "${{ github.workspace}}/build" \
             -DAWESOME_VERSION=$AWESOME_VERSION \
-            -DLUA_LIBRARY=${{ matrix.lua_library || env.LUALIBRARY }} \
-            -DLUA_INCLUDE_DIR=${{ matrix.lua_include_dir || env.LUAINCLUDE }} \
+            -DLUA_LIBRARY=$LUALIBRARY \
+            -DLUA_INCLUDE_DIR=$LUAINCLUDE \
             -DGENERATE_DOC=OFF \
             -DGENERATE_MANPAGES=OFF \
             -DDO_COVERAGE=${{ matrix.coverage != '' && 'ON' || 'OFF' }} \
@@ -370,9 +370,8 @@ jobs:
 
             cmake -S ${{ github.workspace }} -B "${{ github.workspace}}/build" \
               -DAWESOME_VERSION=$AWESOME_VERSION \
-              -DLUA_EXECUTABLE=`which ${{ matrix.lua_name }}` \
-              -DLUA_LIBRARY=${{ matrix.lua_library || env.LUALIBRARY }} \
-              -DLUA_INCLUDE_DIR=${{ matrix.lua_include_dir || env.LUAINCLUDE }} \
+              -DLUA_LIBRARY=$LUALIBRARY \
+              -DLUA_INCLUDE_DIR=$LUAINCLUDE \
               -DGENERATE_DOC=OFF \
               -DGENERATE_MANPAGES=OFF \
               -DDO_COVERAGE=OFF \
