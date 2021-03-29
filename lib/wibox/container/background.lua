@@ -33,10 +33,10 @@ function background._use_fallback_algorithm()
         local border_top = self._private.border_top
         local border_bottom = self._private.border_bottom
 
-        local has_border = border_left ~= 0 or
-                           border_right ~= 0 or
-                           border_top ~= 0 or
-                           border_bottom ~= 0
+        local has_border = border_left ~= 0
+                           or border_right ~= 0
+                           or border_top ~= 0
+                           or border_bottom ~= 0
 
         local shape = self._private.shape or gshape.rectangle
         local inner_width = width - (border_left + border_right)
@@ -74,18 +74,18 @@ function background._use_fallback_algorithm()
         local border_top = self._private.border_top
         local border_bottom = self._private.border_bottom
 
-        local has_border = border_left ~= 0 or
-                           border_right ~= 0 or
-                           border_top ~= 0 or
-                           border_bottom ~= 0
+        local has_border = border_left ~= 0
+                           or border_right ~= 0
+                           or border_top ~= 0
+                           or border_bottom ~= 0
 
         if not has_border then
             return
         end
 
-        local border_color = self._private.shape_border_color or
-                             self._private.foreground or
-                             beautiful.fg_normal
+        local border_color = self._private.shape_border_color
+                             or self._private.foreground
+                             or beautiful.fg_normal
 
         cr:set_source(color(border_color))
 
@@ -119,10 +119,10 @@ function background:before_draw_children(context, cr, width, height)
     local border_top = self._private.border_top
     local border_bottom = self._private.border_bottom
 
-    local has_border = border_left ~= 0 or
-                       border_right ~= 0 or
-                       border_top ~= 0 or
-                       border_bottom ~= 0
+    local has_border = border_left ~= 0
+                       or border_right ~= 0
+                       or border_top ~= 0
+                       or border_bottom ~= 0
 
     -- Redirect drawing to a temporary surface. We'll need this later.
     if has_border then
@@ -165,19 +165,19 @@ function background:after_draw_children(_, cr, width, height)
     local border_top = self._private.border_top
     local border_bottom = self._private.border_bottom
 
-    local has_border = border_left ~= 0 or
-                       border_right ~= 0 or
-                       border_top ~= 0 or
-                       border_bottom ~= 0
+    local has_border = border_left ~= 0
+                       or border_right ~= 0
+                       or border_top ~= 0
+                       or border_bottom ~= 0
 
     if not has_border then
         return
     end
 
     local shape = self._private.shape or gshape.rectangle
-    local border_color = self._private.shape_border_color or
-                         self._private.foreground or
-                         beautiful.fg_normal
+    local border_color = self._private.shape_border_color
+                         or self._private.foreground
+                         or beautiful.fg_normal
     local inner_width = width - (border_left + border_right)
     local inner_height = height - (border_top + border_bottom)
 
