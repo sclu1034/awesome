@@ -24,78 +24,112 @@ local background = { mt = {} }
 
 -- The Cairo SVG backend doesn't support surface as patterns correctly.
 -- The result is both glitchy and blocky. It is also impossible to introspect.
--- Calling this function replace the normal code path is a "less correct", but
--- more widely compatible version.
+-- Calling this function replaces the normal code path with a "less correct",
+-- but more widely compatible version.
 function background._use_fallback_algorithm()
     background.before_draw_children = function(self, _, cr, width, height)
-        local bw    = self._private.shape_border_width or 0
+        local border_left = self._private.border_left
+        local border_right = self._private.border_right
+        local border_top = self._private.border_top
+        local border_bottom = self._private.border_bottom
+
+        local has_border = border_left ~= 0 or
+                           border_right ~= 0 or
+                           border_top ~= 0 or
+                           border_bottom ~= 0
+
         local shape = self._private.shape or gshape.rectangle
-
-        if bw > 0 then
-            cr:translate(bw, bw)
-            width, height = width - 2*bw, height - 2*bw
-        end
-
-        shape(cr, width, height)
-
-        if bw > 0 then
-            cr:save() --Save to avoid messing with the original source
-            cr:set_line_width(bw)
-            cr:set_source(color(self._private.shape_border_color or self._private.foreground or beautiful.fg_normal))
-            cr:stroke_preserve()
-            cr:restore()
-        end
+        local inner_width = width - (border_left + border_right)
+        local inner_height = height - (border_top + border_bottom)
 
         if self._private.background then
-            cr:save() --Save to avoid messing with the original source
+            -- Save to avoid messing with the original source
+            cr:save()
             cr:set_source(self._private.background)
-            cr:fill_preserve()
+            cr:paint()
             cr:restore()
         end
 
-        cr:translate(-bw, -bw)
-        cr:clip()
+        -- Adjust the content's position and size to add border around it
+        if has_border then
+            cr:translate(border_left, border_top)
+            inner_width = width - (border_left + border_right)
+            inner_height = height - (border_top + border_bottom)
+        end
+
+        -- Apply shape to inner content
+        shape(cr, inner_width, inner_height)
+
+        if has_border then
+            cr:translate(-border_left, -border_top)
+        end
 
         if self._private.foreground then
             cr:set_source(self._private.foreground)
         end
     end
     background.after_draw_children = function(self, _, cr, width, height)
-        local bw    = self._private.shape_border_width or 0
-        local shape = self._private.shape or gshape.rectangle
+        local border_left = self._private.border_left
+        local border_right = self._private.border_right
+        local border_top = self._private.border_top
+        local border_bottom = self._private.border_bottom
 
-        if bw > 0 then
-            cr:save()
-            cr:translate(bw, bw)
-            width, height = width - 2*bw, height - 2*bw
-            shape(cr, width, height)
-            cr:set_line_width(bw)
-            cr:set_source(color(self._private.shape_border_color or self._private.foreground or beautiful.fg_normal))
-            cr:stroke()
-            cr:restore()
+        local has_border = border_left ~= 0 or
+                           border_right ~= 0 or
+                           border_top ~= 0 or
+                           border_bottom ~= 0
+
+        if not has_border then
+            return
         end
+
+        local border_color = self._private.shape_border_color or
+                             self._private.foreground or
+                             beautiful.fg_normal
+
+        cr:set_source(color(border_color))
+
+        -- For each side, draw a line with that side's border
+        cr:set_line_width(border_left)
+        cr:move_to(0, 0)
+        cr:line_to(0, height)
+        cr:stroke_preserve()
+
+        cr:set_line_width(border_bottom)
+        cr:move_to(0, height)
+        cr:line_to(width, height)
+        cr:stroke_preserve()
+
+        cr:set_line_width(border_right)
+        cr:move_to(width, height)
+        cr:line_to(width, 0)
+        cr:stroke_preserve()
+
+        cr:set_line_width(border_top)
+        cr:move_to(0, 0)
+        cr:line_to(width, 0)
+        cr:stroke_preserve()
     end
 end
 
--- Make sure a surface pattern is freed *now*
-local function dispose_pattern(pattern)
-    local status, s = pattern:get_surface()
-    if status == "SUCCESS" then
-        s:finish()
-    end
-end
-
--- Prepare drawing the children of this widget
+-- Draw background color and/or image
 function background:before_draw_children(context, cr, width, height)
-    local bw    = self._private.shape_border_width or 0
-    local shape = self._private.shape or (bw > 0 and gshape.rectangle or nil)
+    local border_left = self._private.border_left
+    local border_right = self._private.border_right
+    local border_top = self._private.border_top
+    local border_bottom = self._private.border_bottom
 
-    -- Redirect drawing to a temporary surface if there is a shape
-    if shape then
+    local has_border = border_left ~= 0 or
+                       border_right ~= 0 or
+                       border_top ~= 0 or
+                       border_bottom ~= 0
+
+    -- Redirect drawing to a temporary surface. We'll need this later.
+    if has_border then
         cr:push_group_with_content(cairo.Content.COLOR_ALPHA)
     end
 
-    -- Draw the background
+    -- Draw the background color
     if self._private.background then
         cr:save()
         cr:set_source(self._private.background)
@@ -103,10 +137,11 @@ function background:before_draw_children(context, cr, width, height)
         cr:fill()
         cr:restore()
     end
+
     if self._private.bgimage then
         cr:save()
         if type(self._private.bgimage) == "function" then
-            self._private.bgimage(context, cr, width, height,unpack(self._private.bgimage_args))
+            self._private.bgimage(context, cr, width, height, unpack(self._private.bgimage_args))
         else
             local pattern = cairo.Pattern.create_for_surface(self._private.bgimage)
             cr:set_source(pattern)
@@ -116,85 +151,109 @@ function background:before_draw_children(context, cr, width, height)
         cr:restore()
     end
 
+    -- Set the default color for children
     if self._private.foreground then
         cr:set_source(self._private.foreground)
     end
 end
 
--- Draw the border
+-- Draw the border.
+-- Layout for the `inner` strategy has already been handled.
 function background:after_draw_children(_, cr, width, height)
-    local bw    = self._private.shape_border_width or 0
-    local shape = self._private.shape or (bw > 0 and gshape.rectangle or nil)
+    local border_left = self._private.border_left
+    local border_right = self._private.border_right
+    local border_top = self._private.border_top
+    local border_bottom = self._private.border_bottom
 
-    if not shape then
+    local has_border = border_left ~= 0 or
+                       border_right ~= 0 or
+                       border_top ~= 0 or
+                       border_bottom ~= 0
+
+    if not has_border then
         return
     end
 
-    -- Okay, there is a shape. Get it as a path.
+    local shape = self._private.shape or gshape.rectangle
+    local border_color = self._private.shape_border_color or
+                         self._private.foreground or
+                         beautiful.fg_normal
+    local inner_width = width - (border_left + border_right)
+    local inner_height = height - (border_top + border_bottom)
 
-    cr:translate(bw, bw)
-    shape(cr, width - 2*bw, height - 2*bw, unpack(self._private.shape_args or {}))
-    cr:translate(-bw, -bw)
-
-    if bw > 0 then
-        -- Now we need to do a border, somehow. We begin with another
-        -- temporary surface.
-        cr:push_group_with_content(cairo.Content.ALPHA)
-
-        -- Mark everything as "this is border"
-        cr:set_source_rgba(0, 0, 0, 1)
-        cr:paint()
-
-        -- Now remove the inside of the shape to get just the border
-        cr:set_operator(cairo.Operator.SOURCE)
-        cr:set_source_rgba(0, 0, 0, 0)
-        cr:fill_preserve()
-
-        local mask = cr:pop_group()
-        -- Now actually draw the border via the mask we just created.
-        cr:set_source(color(self._private.shape_border_color or self._private.foreground or beautiful.fg_normal))
-        cr:set_operator(cairo.Operator.SOURCE)
-        cr:mask(mask)
-
-        dispose_pattern(mask)
-    end
-
-    -- We now have the right content in a temporary surface. Copy it to the
-    -- target surface. For this, we need another mask
+    -- We begin with building a mask on a temporary surface
     cr:push_group_with_content(cairo.Content.ALPHA)
 
-    -- Draw the border with 2 * border width (this draws both
-    -- inside and outside, only half of it is outside)
-    cr.line_width = 2 * bw
+    -- Mark everything as potential border
     cr:set_source_rgba(0, 0, 0, 1)
-    cr:stroke_preserve()
+    cr:paint()
 
-    -- Now fill the whole inside so that it is also include in the mask
+    -- Apply the inner shape
+    cr:translate(border_left, border_top)
+    shape(
+        cr,
+        inner_width,
+        inner_height,
+        unpack(self._private.shape_args or {})
+    )
+    cr:translate(-border_left, -border_top)
+
+    -- Crucial operator change, so that the following
+    -- transparency draws correctly into the mask
+    cr:set_operator(cairo.Operator.SOURCE)
+    -- By drawing with full transparency, we mark the inner part as
+    -- "not border"
+    cr:set_source_rgba(0, 0, 0, 0)
     cr:fill()
 
     local mask = cr:pop_group()
-    local source = cr:pop_group() -- This pops what was pushed in before_draw_children
 
-    -- This now draws the content of the background widget to the actual
-    -- target, but only the part that is inside the mask
+    -- We got our mask.
+    -- Now actually draw the border via the mask we just created.
+    cr:set_source(color(border_color))
     cr:set_operator(cairo.Operator.OVER)
-    cr:set_source(source)
     cr:mask(mask)
 
-    dispose_pattern(mask)
-    dispose_pattern(source)
+    -- And clean up after ourselves
+    local _, s = mask:get_surface()
+    s:finish()
+
+    -- We pushed in `background:before_draw_children`, so everything done
+    -- can be turned into a single source. This can then be drawn using the
+    -- outer shape.
+    cr:pop_group_to_source()
+    shape(
+        cr,
+        width,
+        height,
+        unpack(self._private.shape_args or {})
+    )
+    cr:fill()
 end
 
 -- Layout this widget
 function background:layout(_, width, height)
-    if self._private.widget then
-        local bw = self._private.border_strategy == "inner" and
-            self._private.shape_border_width or 0
+    if not self._private.widget then
+        return
+    end
 
+    if self._private.border_strategy ~= "inner" then
         return { base.place_widget_at(
-            self._private.widget, bw, bw, width-2*bw, height-2*bw
+            self._private.widget, 0, 0, width, height
         ) }
     end
+
+    local border_left = self._private.border_left
+    local border_right = self._private.border_right
+    local border_top = self._private.border_top
+    local border_bottom = self._private.border_bottom
+
+    local inner_width = width - (border_left + border_right)
+    local inner_height = height - (border_top + border_bottom)
+
+    return { base.place_widget_at(
+        self._private.widget, border_left, border_top, inner_width, inner_height
+    ) }
 end
 
 -- Fit this widget into the given area
@@ -203,14 +262,25 @@ function background:fit(context, width, height)
         return 0, 0
     end
 
-    local bw = self._private.border_strategy == "inner" and
-        self._private.shape_border_width or 0
+    if self._private.border_strategy ~= "inner" then
+        return base.fit_widget(
+            self, context, self._private.widget, width, height
+        )
+    end
+
+    local border_left = self._private.border_left
+    local border_right = self._private.border_right
+    local border_top = self._private.border_top
+    local border_bottom = self._private.border_bottom
+
+    local inner_width = width - (border_left + border_right)
+    local inner_height = height - (border_top + border_bottom)
 
     local w, h = base.fit_widget(
-        self, context, self._private.widget, width - 2*bw, height - 2*bw
+        self, context, self._private.widget, inner_width, inner_height
     )
 
-    return w+2*bw, h+2*bw
+    return w + (border_left + border_right), h + (border_top + border_bottom)
 end
 
 --- The widget displayed in the background widget.
@@ -324,22 +394,43 @@ end
 -- @see border_width
 
 --- Add a border of a specific width.
+-- Pass a number to set all four edges to the same border width. Pass
+-- a table to specify individual values.
 --
--- If the shape is set, the border will also be shaped.
+-- If the shape is set, both border and content will be shaped.
 --
--- See `wibox.container.background.shape` for an usage example.
 -- @property border_width
--- @tparam[opt=0] number width The border width.
+-- @tparam[opt=0] number|table width The border width.
 -- @propemits true false
 -- @introducedin 4.4
 -- @see border_color
 
-function background:set_border_width(width)
-    if self._private.shape_border_width == width then return end
+function background:set_border_width(val)
+    if not val then
+        val = 0
+    end
 
-    self._private.shape_border_width = width
+    if type(val) == "number" then
+        if self._private.border_left   == val and
+           self._private.border_right  == val and
+           self._private.border_top    == val and
+           self._private.border_bottom == val then
+            return
+        end
+
+        self._private.border_left   = val
+        self._private.border_right  = val
+        self._private.border_top    = val
+        self._private.border_bottom = val
+    elseif type(val) == "table" then
+        self._private.border_left   = val.left   or self._private.border_left
+        self._private.border_right  = val.right  or self._private.border_right
+        self._private.border_top    = val.top    or self._private.border_top
+        self._private.border_bottom = val.bottom or self._private.border_bottom
+    end
+
     self:emit_signal("widget::redraw_needed")
-    self:emit_signal("property::border_width", width)
+    self:emit_signal("property::border_width", val)
 end
 
 function background:get_border_width()
@@ -362,7 +453,8 @@ end
 
 --- When a `shape` is set, also draw a border.
 --
--- See `wibox.container.background.shape` for an usage example.
+-- See `wibox.container.background.shape` or
+-- `wibox.container.background.border_width` for a usage example.
 --
 -- @deprecatedproperty shape_border_color
 -- @usebeautiful beautiful.fg_normal Fallback when 'fg' and `border_color` aren't set.
@@ -373,7 +465,8 @@ end
 
 --- Set the color for the border.
 --
--- See `wibox.container.background.shape` for an usage example.
+-- See `wibox.container.background.shape` or
+-- `wibox.container.background.border_width` for a usage example.
 -- @property border_color
 -- @tparam[opt=self._private.foreground] color fg The border color, pattern or gradient
 -- @propemits true false
@@ -476,6 +569,7 @@ local function new(widget, bg, shape)
 
     ret:set_widget(widget)
     ret:set_bg(bg)
+    ret:set_border_width(0)
 
     return ret
 end
