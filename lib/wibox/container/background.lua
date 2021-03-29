@@ -399,6 +399,8 @@ end
 --
 -- If the shape is set, both border and content will be shaped.
 --
+--@DOC_wibox_container_background_border_EXAMPLE@
+--
 -- @property border_width
 -- @tparam[opt=0] number|table width The border width.
 -- @propemits true false
