@@ -214,6 +214,9 @@ jobs:
       # Automatically picks the current branch/PR
       - uses: actions/checkout@v2
 
+      - name: Print Git revision
+        run: git log -10
+
       - name: Create Build Environment
         run: cmake -E make_directory -B "${{ github.workspace }}/build"
 
