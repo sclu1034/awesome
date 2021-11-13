@@ -810,9 +810,10 @@ function module.display_widget(wdg, width, height, context)
 
         return wibox.widget {
             fit = function()
-                return w, h
+                return w, h+5
             end,
             draw = function(_, _, cr2)
+                cr2:translate(0, 5)
                 cr2:set_source_surface(memento)
                 cr2:paint()
             end
