@@ -120,6 +120,7 @@ kbd, p code, ol code {
 }
 
 #content {
+    width: 100%;
     overflow: hidden;
 }
 
