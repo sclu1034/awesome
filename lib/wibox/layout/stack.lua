@@ -69,16 +69,22 @@ local stack = {mt={}}
 function stack:layout(_, width, height)
     local result = {}
     local spacing = self._private.spacing
+    local num_widgets = #self._private.widgets
+    local h_offset, v_offset = self._private.h_offset, self._private.v_offset
 
-    width  = width  - math.abs(self._private.h_offset * #self._private.widgets) - 2*spacing
-    height = height - math.abs(self._private.v_offset * #self._private.widgets) - 2*spacing
+    width  = width  - math.abs(h_offset * num_widgets) - 2*spacing
+    height = height - math.abs(v_offset * num_widgets) - 2*spacing
 
-    local h_off, v_off = spacing, spacing
+    local x, y = spacing, spacing
 
-    for _, v in pairs(self._private.widgets) do
-        table.insert(result, base.place_widget_at(v, h_off, v_off, width, height))
-        h_off, v_off = h_off + self._private.h_offset, v_off + self._private.v_offset
-        if self._private.top_only then break end
+    for i, v in pairs(self._private.widgets) do
+        if not self._private.top_only or i == num_widgets then
+            table.insert(result, base.place_widget_at(v, x, y, width, height))
+        end
+
+        -- To accurately place the top widget, the offset needs to be calculated regardless
+        -- of whether the widgets are actually placed
+        x, y = x + h_offset, y + v_offset
     end
 
     return result
@@ -121,7 +127,7 @@ function stack:raise(index)
 
     local w = self._private.widgets[index]
     table.remove(self._private.widgets, index)
-    table.insert(self._private.widgets, 1, w)
+    table.insert(self._private.widgets, w)
 
     self:emit_signal("widget::layout_changed")
 end
@@ -142,7 +148,7 @@ function stack:raise_widget(widget, recursive)
         idx, layout = self:index(layout, recursive)
     end
 
-    if layout == self and idx ~= 1 then
+    if layout == self and idx ~= #self._private.widgets then
         self:raise(idx)
     end
 end
