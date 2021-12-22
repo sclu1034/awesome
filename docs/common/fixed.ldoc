@@ -45,9 +45,10 @@
 
 --- Swap 2 widgets in a layout.
 --
--- If `widget1` is present multiple time, only the first instance is swapped.
+-- If there are multiple instances of `widget1` present in the layout,
+-- the first instance found will be swapped with `widget2`.
 --
--- Calls `set` internally, so the signal `widget::replaced` is emitted for both
+-- This calls `set` internally, so the signal `widget::replaced` is emitted for both
 -- widgets as well.
 --
 -- @tparam widget widget1 The first widget

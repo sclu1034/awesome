@@ -1,12 +1,17 @@
 ---------------------------------------------------------------------------
 -- A stacked layout.
 --
--- This layout display widgets on top of each other. It can be used to overlay
--- a `wibox.widget.textbox` on top of a `awful.widget.progressbar` or manage
--- "pages" where only one is visible at any given moment.
+-- This layout display widgets on top of each other. Example use cases would be
+-- overlaying a `wibox.widget.textbox` over a `awful.widget.progressbar` or
+-- managing "pages" where only one is visible at any given moment.
 --
--- The indices are going from 1 (the bottom of the stack) up to the top of
--- the stack. The order can be changed either using `:swap` or `:raise`.
+-- The list of widgets is handled FIFO (first in first out). Therefore, the stack
+-- will render widgets in the reverse order to how they were added:
+-- The first widget (at index `1`) is the bottom-most layer, index `2` renders
+-- on top of that, index `3` over both, and so on.
+--
+-- A widget's position in the stack can be changed at any point using methods
+-- like `:swap` or `:raise`.
 --
 --@DOC_wibox_layout_defaults_stack_EXAMPLE@
 -- @author Emmanuel Lepage Vallee
@@ -31,8 +36,8 @@ local stack = {mt={}}
 
 --- Remove a widget from the layout.
 --
--- @tparam index The widget index to remove
--- @treturn boolean index If the operation is successful
+-- @tparam number index The widget index to remove
+-- @treturn boolean Returns `true` when the operation was successful, `false` otherwise
 -- @method remove
 -- @interface layout
 
@@ -54,7 +59,7 @@ local stack = {mt={}}
 -- widget(s) to remove.
 --
 -- @tparam widget widget ... Widgets that should be removed (must at least be one)
--- @treturn boolean If the operation is successful
+-- @treturn boolean Returns `true` when the operation was successful, `false` otherwise
 -- @method remove_widgets
 -- @interface layout
 
@@ -96,7 +101,10 @@ function stack:fit(context, orig_width, orig_height)
     return math.min(max_w, orig_width), math.min(max_h, orig_height)
 end
 
---- If only the first stack widget is drawn.
+--- Draw only the top-most widget
+--
+-- When set to `true`, only the top-most widget (with the highest index) will be
+-- drawn.
 --
 -- @property top_only
 -- @tparam boolean top_only
@@ -112,7 +120,7 @@ function stack:set_top_only(top_only)
     self:emit_signal("property::top_only", top_only)
 end
 
---- Raise a widget at `index` to the top of the stack.
+--- Raise the widget at `index` to the top of the stack.
 --
 -- @method raise
 -- @tparam number index the widget index to raise
@@ -157,15 +165,15 @@ end
 -- @property horizontal_offset
 -- @tparam number horizontal_offset
 -- @propemits true false
--- @see vertial_offset
+-- @see vertical_offset
 
 --- Add an vertical offset to each layers.
 --
 -- Note that this reduces the overall size of each widgets by the sum of all
 -- layers offsets.
 --
--- @property vertial_offset
--- @tparam number vertial_offset
+-- @property vertical_offset
+-- @tparam number vertical_offset
 -- @propemits true false
 -- @see horizontal_offset
 
@@ -208,6 +216,14 @@ end
 function stack.mt:__call(...)
     return new(...)
 end
+
+--- Hide the spacing_widget property
+-- @hidden
+-- @property spacing_widget
+
+--- Hide the fill_space property
+-- @hidden
+-- @property fill_space
 
 --@DOC_fixed_COMMON@
 
