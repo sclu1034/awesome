@@ -113,6 +113,10 @@ function stack:get_top_only()
 end
 
 function stack:set_top_only(top_only)
+    if self._private.top_only == top_only then
+        return
+    end
+
     self._private.top_only = top_only
     self:emit_signal("widget::layout_changed")
     self:emit_signal("property::top_only", top_only)
@@ -123,11 +127,15 @@ end
 -- @method raise
 -- @tparam number index the widget index to raise
 function stack:raise(index)
-    if (not index) or (not self._private.widgets[index]) then return end
+    local widgets = self._private.widgets
 
-    local w = self._private.widgets[index]
-    table.remove(self._private.widgets, index)
-    table.insert(self._private.widgets, w)
+    if (not index) or (not widgets[index]) or (index == #widgets) then
+        return
+    end
+
+    local w = widgets[index]
+    table.remove(widgets, index)
+    table.insert(widgets, w)
 
     self:emit_signal("widget::layout_changed")
 end
@@ -176,6 +184,10 @@ end
 -- @see horizontal_offset
 
 function stack:set_horizontal_offset(value)
+    if self._private.h_offset == value then
+        return
+    end
+
     self._private.h_offset = value
     self:emit_signal("widget::layout_changed")
     self:emit_signal("property::horizontal_offset", value)
@@ -186,6 +198,10 @@ function stack:get_horizontal_offset()
 end
 
 function stack:set_vertical_offset(value)
+    if self._private.v_offset == value then
+        return
+    end
+
     self._private.v_offset = value
     self:emit_signal("widget::layout_changed")
     self:emit_signal("property::vertical_offset", value)
