@@ -58,6 +58,17 @@
 
 #include <glib-unix.h>
 
+gboolean xcb_source_prepare(GSource *, gint *);
+gboolean xcb_source_check(GSource *);
+gboolean xcb_source_dispatch(GSource *, GSourceFunc, gpointer);
+void xcb_source_finalize(GSource *);
+static GSourceFuncs xcb_source_funcs = {
+    .prepare = xcb_source_prepare,
+    .check = xcb_source_check,
+    .dispatch = xcb_source_dispatch,
+    .finalize = xcb_source_finalize,
+};
+
 awesome_t globalconf;
 
 /** argv used to run awesome */
@@ -372,65 +383,84 @@ acquire_timestamp(void)
             break;
         }
 
-        /* Hm, not the right event. */
-        if (globalconf.pending_event != NULL)
-        {
-            event_handle(globalconf.pending_event);
-            p_delete(&globalconf.pending_event);
-        }
-        globalconf.pending_event = event;
+        g_queue_push_tail(globalconf.event_source->queue, event);
     }
 }
 
-static xcb_generic_event_t *poll_for_event(void)
-{
-    if (globalconf.pending_event) {
-        xcb_generic_event_t *event = globalconf.pending_event;
-        globalconf.pending_event = NULL;
-        return event;
-    }
 
-    return xcb_poll_for_event(globalconf.connection);
+gboolean
+xcb_source_prepare(GSource *source, gint *timeout)
+{
+    xcb_source_t *self = (xcb_source_t *)source;
+    *timeout = -1;
+    return !g_queue_is_empty(self->queue);
 }
 
-static void
-a_xcb_check(void)
-{
-    xcb_generic_event_t *mouse = NULL, *event;
 
-    while((event = poll_for_event()))
+gboolean
+xcb_source_check(GSource *source)
+{
+    xcb_generic_event_t *event;
+    xcb_generic_event_t *mouse = NULL;
+    xcb_source_t *self = (xcb_source_t *)source;
+
+    while ((event = xcb_poll_for_event(globalconf.connection)) != NULL)
     {
-        /* We will treat mouse events later.
-         * We cannot afford to treat all mouse motion events,
-         * because that would be too much CPU intensive, so we just
-         * take the last we get after a bunch of events. */
-        if(XCB_EVENT_RESPONSE_TYPE(event) == XCB_MOTION_NOTIFY)
+        uint8_t type = XCB_EVENT_RESPONSE_TYPE(event);
+        /* We cannot afford to treat all mouse motion events,
+         * as that would be too much CPU intensive. So we
+         * debounce those and only keep the most recent one.
+         */
+        if(type == XCB_MOTION_NOTIFY)
         {
             p_delete(&mouse);
             mouse = event;
+            continue;
         }
-        else
+
+        /* Unless it's a different kind of mouse event, in which case
+         * the motion event needs to be handled in order.
+         */
+        if(mouse && (type == XCB_ENTER_NOTIFY || type == XCB_LEAVE_NOTIFY
+                    || type == XCB_BUTTON_PRESS || type == XCB_BUTTON_RELEASE))
         {
-            uint8_t type = XCB_EVENT_RESPONSE_TYPE(event);
-            if(mouse && (type == XCB_ENTER_NOTIFY || type == XCB_LEAVE_NOTIFY
-                        || type == XCB_BUTTON_PRESS || type == XCB_BUTTON_RELEASE))
-            {
-                /* Make sure enter/motion/leave/press/release events are handled
-                 * in the correct order */
-                event_handle(mouse);
-                p_delete(&mouse);
-            }
-            event_handle(event);
-            p_delete(&event);
+            g_queue_push_tail(self->queue, mouse);
+            p_delete(&mouse);
         }
+
+        g_queue_push_tail(self->queue, event);
     }
 
-    if(mouse)
+    if (mouse)
     {
-        event_handle(mouse);
-        p_delete(&mouse);
+        g_queue_push_tail(self->queue, mouse);
     }
+
+    return !g_queue_is_empty(self->queue);
 }
+
+
+gboolean
+xcb_source_dispatch(GSource *source, GSourceFunc callback, gpointer user_data)
+{
+    xcb_generic_event_t *event;
+    xcb_source_t *self = (xcb_source_t *)source;
+    
+    event = g_queue_pop_head(self->queue);
+    event_handle(event);
+    free(event);
+
+    return G_SOURCE_CONTINUE;
+}
+
+
+void
+xcb_source_finalize(GSource *source)
+{
+    xcb_source_t *self = (xcb_source_t *)source;
+    g_queue_free_full(self->queue, free);
+}
+
 
 static gboolean
 a_xcb_io_cb(GIOChannel *source, GIOCondition cond, gpointer data)
@@ -463,12 +493,6 @@ a_glib_poll(GPollFD *ufds, guint nfsd, gint timeout)
         lua_settop(L, 0);
     }
 
-    /* Don't sleep if there is a pending event */
-    assert(globalconf.pending_event == NULL);
-    globalconf.pending_event = xcb_poll_for_event(globalconf.connection);
-    if (globalconf.pending_event != NULL)
-        timeout = 0;
-
     /* Check how long this main loop iteration took */
     gettimeofday(&now, NULL);
     timersub(&now, &last_wakeup, &length_time);
@@ -483,7 +507,6 @@ a_glib_poll(GPollFD *ufds, guint nfsd, gint timeout)
     res = g_poll(ufds, nfsd, timeout);
     saved_errno = errno;
     gettimeofday(&last_wakeup, NULL);
-    a_xcb_check();
     errno = saved_errno;
 
     return res;
@@ -896,6 +919,16 @@ main(int argc, char **argv)
     client_emit_scanned();
 
     luaA_emit_startup();
+
+    globalconf.event_source = (xcb_source_t *)g_source_new(&xcb_source_funcs, sizeof(xcb_source_t));
+    globalconf.event_source->queue = g_queue_new();
+    globalconf.event_source->fd = g_source_add_unix_fd(
+        (GSource *)globalconf.event_source,
+        xcb_get_file_descriptor(globalconf.connection),
+        G_IO_IN
+    );
+
+    g_source_attach((GSource *)globalconf.event_source, NULL);
 
     /* Setup the main context */
     g_main_context_set_poll_func(g_main_context_default(), &a_glib_poll);
