@@ -6,7 +6,7 @@
 -- @author Julien Danjou &lt;julien@danjou.info&gt;
 -- @copyright 2009 Julien Danjou
 -- @widgetmod awful.widget.layoutbox
--- @supermodule wibox.layout.fixed
+-- @supermodule wibox.widget.base
 ---------------------------------------------------------------------------
 
 local setmetatable = setmetatable
@@ -45,12 +45,17 @@ local function update_from_tag(t)
     end
 end
 
---- Create a layoutbox widget. It draws a picture with the current layout
--- symbol of the current tag.
+--- Returns an instance of a layoutbox widget.
+--
+-- A layoutbox draws a picture with the current layout symbol of the current tag.
+--
+-- There can only be one instance of this widget per screen. If such an instance already exists,
+-- it is returned. Otherwise a new instance is created and cached for the given `screen`.
+--
 -- @constructorfct awful.widget.layoutbox
 -- @tparam table args The arguments.
--- @tparam screen args.screen The screen number that the layout will be represented for.
--- @tparam table args.buttons The `awful.button`s for this layoutbox.
+-- @tparam[opt=1] screen args.screen The screen number that the layout will be represented for.
+-- @tparam[opt] table args.buttons The `awful.button`s for this layoutbox.
 -- @return The layoutbox.
 function layoutbox.new(args)
     args = args or {}
