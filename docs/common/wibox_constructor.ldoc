@@ -1,22 +1,33 @@
- @tparam integer args.border_width Border width.
--- @tparam string args.border_color Border color.
+ @tparam[opt=0] integer args.border_width Border width.
+-- @tparam[opt=beautiful.fg_normal] string args.border_color Border color.
 -- @tparam[opt=false] boolean args.ontop On top of other windows.
--- @tparam string args.cursor The mouse cursor.
--- @tparam boolean args.visible Visibility.
+-- @tparam[opt="left_ptr"] string args.cursor The cursor to show while the mouse
+-- is over this wibox.
+-- @tparam[opt=false] boolean args.visible Visibility.
 -- @tparam[opt=1] number args.opacity The opacity, between 0 and 1.
--- @tparam string args.type The window type (desktop, normal, dock, …).
--- @tparam integer args.x The x coordinates.
--- @tparam integer args.y The y coordinates.
--- @tparam integer args.width The width.
--- @tparam integer args.height The height.
--- @tparam screen args.screen The wibox screen.
--- @tparam wibox.widget args.widget The widget that the wibox displays.
--- @param args.shape_bounding The wibox’s bounding shape as a (native) cairo surface.
--- @param args.shape_clip The wibox’s clip shape as a (native) cairo surface.
--- @param args.shape_input The wibox’s input shape as a (native) cairo surface.
--- @tparam color args.bg The background.
--- @tparam surface args.bgimage The background image of the drawable.
--- @tparam color args.fg The foreground (text) color.
--- @tparam gears.shape args.shape The shape.
+-- This affects the entire content. For a transparent background, set the alpha
+-- channel of `args.bg`.
+-- @tparam[opt] string args.type The window type (desktop, normal, dock, …).
+-- @tparam[opt=0] integer args.x The absolute x coordinate on the canvas created
+-- by the X server. It is not relative to `args.screen`.
+-- @tparam[opt=0] integer args.y The absolute y coordinate on the canvas created
+-- by the X server. It is not relative to `args.screen`.
+-- @tparam[opt=1] integer args.width The width.
+-- @tparam[opt=1] integer args.height The height.
+-- @tparam[opt=1] screen|string|integer args.screen When set, the wibox will
+-- be positioned in the top left corner of that screen. This is applied after
+-- `args.x` and `args.y` and will therefore overwrite those. The same values are
+-- accepted as when indexing the global `screen`.
+-- @tparam[opt] wibox.widget args.widget The widget that the wibox displays.
+-- @param[opt] args.shape_bounding The wibox’s bounding shape as a (native)
+-- cairo surface.
+-- @param[opt] args.shape_clip The wibox’s clip shape as a (native) cairo
+-- surface.
+-- @param[opt] args.shape_input The wibox’s input shape as a (native) cairo
+-- surface.
+-- @tparam[opt=beautiful.bg_normal] color args.bg The background.
+-- @tparam[opt] surface args.bgimage The background image of the drawable.
+-- @tparam[opt=beautiful.fg_normal] color args.fg The foreground (text) color.
+-- @tparam[opt] gears.shape args.shape The shape.
 -- @tparam[opt=false] boolean args.input_passthrough If the inputs are
 --  forward to the element below.

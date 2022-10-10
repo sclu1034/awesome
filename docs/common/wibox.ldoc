@@ -110,10 +110,17 @@
 
 --- The wibox screen.
 --
+-- This is a virtual property.
+--
+-- When assigning a screen, @{wibox.x} and @{wibox.y} are changed
+-- to the top left corner of the given screen.
+-- When querying the value, the wibox will attempt to determine
+-- the current screen from it's @{wibox.x} and @{wibox.y} coordinates.
+--
 -- @baseclass wibox
 -- @property screen
 -- @tparam screen screen
--- @propertydefault The screen which contains `0x0`.
+-- @propertydefault The screen determined by the coordinates @{wibox.x} and @{wibox.y}.
 -- @propemits true false
 
 --  The wibox's `drawable`.

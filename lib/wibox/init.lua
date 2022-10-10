@@ -285,7 +285,7 @@ local function setup_signals(w)
     clone_signal("property::surface")
 end
 
---- Create a wibox.
+--- Creates a new wibox.
 -- @tparam[opt=nil] table args
 --@DOC_wibox_constructor_COMMON@
 -- @treturn wibox The new wibox
