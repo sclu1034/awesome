@@ -1,5 +1,66 @@
 ---------------------------------------------------------------------------
--- Box where widget can be displayed.
+-- A library and base class to render interactive widgets on screen.
+--
+-- The name "wibox" (short for "widget box") is used for two components:
+--
+-- - A library that implements a widget system.
+-- - A special kind of X client, managed by AwesomeWM, that allows rendering
+--   the library's widgets on screen.
+--
+--#### The library
+--
+-- The _wibox_ library implements an extensive widget system that provides
+-- drawing capabilities using the vector-based
+-- [Cairo](https://www.cairographics.org/) and text rendering using
+-- [Pango](https://docs.gtk.org/Pango/index.html).
+--
+-- Widgets are created as a tree-like hierarchy using a data-driven approach
+-- called the @{03-declarative-layout.md|Declarative Layout Definition}.
+-- They are separated into three broad categories:
+--
+-- - _Layout_ widgets (e.g. `wibox.layout.*`)
+-- - _Container_ widgets (e.g. `wibox.container.*`)
+-- - _Content_ widgets (e.g. `wibox.widget.\*` or `awful.widget.*`)
+--
+-- Layout widgets take multiple child widgets and determine the layout of these
+-- widgets between each other.
+-- Common examples would be a @{wibox.layout.grid|grid layout} or a simple
+-- @{wibox.layout.fixed|linear layout}.
+--
+-- Container widgets take a single child widget and manipulate it in some way.
+-- Common examples would be to position the widget in a bigger space, using
+-- @{wibox.container.place}, @{wibox.container.margin} or
+-- @{wibox.container.constraint}, or to change the background using
+-- @{wibox.container.background}.
+--
+-- Content widgets are those widgets that provide the content to render and
+-- interact with.
+-- Common examples would be rendering @{wibox.widget.textbox|text} or
+-- @{wibox.widget.imagebox|images} or providing a @{awful.widget.taglist|taglist}
+-- or @{awful.widget.tasklist|tasklist} for your bar.
+--
+--#### The class
+--
+-- The _wibox_ class implements a special kind of X client that holds widgets
+-- created by the widget system.
+--
+-- It serves as the Cairo surface that the widgets can draw to and
+-- sends back user input for interactivity.
+-- While it is an X client, it does not behave like the
+-- usual clients. It does not show up in lists like @{client.get} and is
+-- unaffected by most operations targeted at clients, such as tiling layouts,
+-- input focus and tags.
+--
+-- With @{wibox} as the base class, there are several special-purpose
+-- components available:
+--
+-- - @{awful.wibar}: An always visible bar/dock, attached to a screen edge.
+-- - @{awful.popup}: An auto-resized, free floating window.
+-- - @{awful.tooltip}: A wibox attached to another object that shows on
+--   hover.
+--
+-- While a @{wibox} will give you low-level control over positioning and size,
+-- for most use cases, @{awful.popup} will be a better choice.
 --
 -- @author Uli Schlachter
 -- @copyright 2010 Uli Schlachter
