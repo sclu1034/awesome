@@ -1,15 +1,13 @@
 ---------------------------------------------------------------------------
 -- A flexible separator widget.
 --
--- By default, this widget display a simple line, but can be extended by themes
--- (or directly) to display much more complex visuals.
+-- By default, this widget displays a simple line, but can be customized through
+-- its properties and the corresponding theme variables to draw arbitrary
+-- shapes.
 --
--- This widget is mainly intended to be used alongside the `spacing_widget`
--- property supported by various layouts such as:
---
--- * `wibox.layout.fixed`
--- * `wibox.layout.flex`
--- * `wibox.layout.ratio`
+-- This widget is mainly intended to be used as the `spacing_widget` in layouts
+-- that support it, such as `wibox.layout.fixed`, `wibox.layout.flex`
+-- or `wibox.layout.ratio`.
 --
 -- When used with these layouts, it is also possible to provide custom clipping
 -- functions. This is useful when the layout has overlapping widgets (negative
@@ -205,12 +203,19 @@ for _, prop in ipairs {"orientation", "color", "thickness", "span_ratio",
 end
 
 --- Create a new separator.
+--
+-- `args.span_ratio`, `args.orentiation` and `args.thickness` alter the style of the default
+-- "line" shape. If a custom shape is set, those values are ignored.
+--
+-- Colors and borders are always applied.
+--
 -- @constructorfct wibox.widget.separator
 -- @tparam table args The arguments (all properties are available).
 -- @tparam[opt] string args.orientation The separator's orientation.
 -- @tparam[opt] number args.thickness The separator's thickness.
 -- @tparam[opt] function args.shape The separator's shape.
--- @tparam[opt] number args.span_ratio The relative percentage covered by the bar.
+-- @tparam[opt] number args.span_ratio The relative percentage covered by the
+-- bar.
 -- @tparam[opt] color args.color The separator's color.
 -- @tparam[opt] color args.border_color The separator's border color.
 -- @tparam[opt] number args.border_width The separator's border width.
