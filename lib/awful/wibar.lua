@@ -1,14 +1,21 @@
 ---------------------------------------------------------------------------
 --- The main AwesomeWM "bar" module.
 --
--- This module allows you to easily create wibox and attach them to the edge of
--- a screen.
+-- This specialized form of a @{wibox} creates a dock attached to one screen
+-- edge, that spans the entire width or height of the screen, depending on the
+-- orientation.
+--
+-- As such, wibars can be both horizontal
 --
 --@DOC_awful_wibar_default_EXAMPLE@
 --
--- You can even have vertical bars too.
+-- or vertical
 --
 --@DOC_awful_wibar_left_EXAMPLE@
+--
+-- Like any @{wibox}, it can display an arbitrary tree of widgets. Most commonly,
+-- the top-level layout widget will be a @{wibox.layout.align} to separate the
+-- bar into three segments.
 --
 -- @author Emmanuel Lepage Vallee &lt;elv1313@gmail.com&gt;
 -- @copyright 2016 Emmanuel Lepage Vallee
