@@ -131,6 +131,9 @@ function filesystem.get_configuration_dir()
 end
 
 --- Get the path to a directory that should be used for caching data.
+--
+-- The directory will be created if it doesn't exist, yet.
+--
 -- @return A string with the requested path with a slash at the end.
 -- @staticfct gears.filesystem.get_cache_dir
 function filesystem.get_cache_dir()
@@ -140,6 +143,11 @@ function filesystem.get_cache_dir()
 end
 
 --- Get the path to the directory where themes are installed.
+--
+-- This directory holds the themes shipped with AwesomeWM and is usualy
+-- under `/usr`. If you're looking for a folder to put your own themes in,
+-- use @{get_configuration_dir} instead.
+--
 -- @return A string with the requested path with a slash at the end.
 -- @staticfct gears.filesystem.get_themes_dir
 function filesystem.get_themes_dir()
@@ -154,9 +162,13 @@ function filesystem.get_awesome_icon_dir()
 end
 
 --- Get the user's config or cache dir.
--- It first checks XDG_CONFIG_HOME / XDG_CACHE_HOME, but then goes with the
+-- It first checks `$XDG_CONFIG_HOME` / `$XDG_CACHE_HOME`, but then goes with the
 -- default paths.
--- @param d The directory to get (either "config" or "cache").
+--
+-- This function is deprecated. Use @{get_configuration_dir} and @{get_cache_dir}
+-- instead, respectively. 
+--
+-- @tparam string d The directory to get (either "config" or "cache").
 -- @return A string containing the requested path.
 -- @staticfct gears.filesystem.get_dir
 function filesystem.get_dir(d)
