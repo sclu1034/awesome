@@ -240,9 +240,11 @@
  */
 
 
-/** Get the number of instances.
+/** Get the number of instances of the screen class.
  *
- * @treturn table The number of screen objects alive.
+ * Usually, this will be the same number as returned by `screen.count`.
+ *
+ * @treturn number The number of screen objects alive.
  * @staticfct instances
  */
 
