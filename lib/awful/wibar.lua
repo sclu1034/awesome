@@ -13,7 +13,7 @@
 -- @author Emmanuel Lepage Vallee &lt;elv1313@gmail.com&gt;
 -- @copyright 2016 Emmanuel Lepage Vallee
 -- @popupmod awful.wibar
--- @supermodule awful.popup
+-- @supermodule wibox
 ---------------------------------------------------------------------------
 
 -- Grab environment we need
@@ -121,6 +121,14 @@ local align_map = {
 -- @propemits true false
 -- @see client.struts
 -- @see screen.workarea
+
+---
+-- @property x
+-- @hidden
+
+---
+-- @property y
+-- @hidden
 
 --- If there is both vertical and horizontal wibar, give more space to vertical ones.
 --
