@@ -199,7 +199,7 @@ function module.append_rules(rules)
     crules:append_rules("awful.rules", rules)
 end
 
---- Remove a new rule to the default set.
+--- Remove a new rule from the default set.
 -- @tparam table|string rule A valid rule or a name passed in the `id` value
 --  when calling `append_rule`.
 function module.remove_rule(rule)
