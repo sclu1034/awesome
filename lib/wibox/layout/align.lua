@@ -16,7 +16,8 @@
 -- @{awful.wibar}.
 --
 -- You may also fill just one or two of the widget slots, the @{expand} algorithm
--- will adjust accordingly.
+-- will adjust accordingly. However, keep in mind that the more appropriate
+-- and flexible way to position a single widget is @{wibox.container.place}.
 --
 --@DOC_wibox_layout_defaults_align_EXAMPLE@
 --
