@@ -26,6 +26,7 @@
 #include <libsn/sn.h>
 
 #include <glib.h>
+#include <glib-unix.h>
 
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_keysyms.h>
@@ -67,6 +68,13 @@ struct sequence_pair {
     xcb_void_cookie_t end;
 };
 typedef struct sequence_pair sequence_pair_t;
+
+struct xcb_source {
+    GSource source;
+    GQueue *queue;
+    gpointer fd;
+};
+typedef struct xcb_source xcb_source_t;
 
 ARRAY_TYPE(button_t *, button)
 ARRAY_TYPE(tag_t *, tag)
@@ -193,6 +201,8 @@ typedef struct
     xcb_screen_t *screen;
     /** A graphic context. */
     xcb_gcontext_t gc;
+    /** The GLib source for XCB events */
+    xcb_source_t *event_source;
     /** Our default depth */
     uint8_t default_depth;
     /** Our default color map */
